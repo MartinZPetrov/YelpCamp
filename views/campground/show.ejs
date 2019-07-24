@@ -1,0 +1,57 @@
+<%include ../partials/header%>
+
+<div class = "container">
+	<div class="row">
+		<div class="col-3">
+			<h1><%= item.name %></h1>
+			<ul class="list-group">
+		  		<li class="list-group-item active">Info 1</li>
+		  		<li class="list-group-item">Info 2</li>
+		  		<li class="list-group-item">Info 3</li>
+			</ul>
+		</div>
+		<div class="col-9">
+			<div class="card">
+			  <img src="<%=item.image%>">
+			  <div class="card-body">
+				<div class="pull-right">
+					<h4>$<%=item.price%></h4>
+					<h4><a><%=item.name%></a></h4>
+					<p><%= item.description%></p>
+					<p><em>Author:</em> <%=item.author.name%> </p>
+					
+					<%if(currentUser && currentUser._id.equals(item.author.id)) {%>
+						<a class="btn btn-warning btn-large mb-3" href="/campgrounds/<%=item._id%>/edit"> Edit Campground </a>
+						<form id="delete-form" action="/campgrounds/<%=item._id%>?_method=DELETE" method="POST">
+							<button class="btn btn-danger">Delete Campground </button>
+						</form>
+					<%}%>
+					
+				</div>
+				<div class="well">
+					</div><a class="btn btn-primary btn-large mb-3" href="/campgrounds/<%=item._id%>/comments/new"> 
+					Create a new comment </a>					
+					<div class="row">
+						<%item.comments.forEach((str) =>{%>
+						<div class=col-12> 
+							<p><strong> <%=str.author.name%> : </strong> <%=str.text%></p>
+							<%if(currentUser && currentUser._id.equals(str.author.id)) {%>
+								<a class="btn btn-xs btn-warning" href="/campgrounds/<%=item._id%>/comments/<%=str.id%>/edit"> 
+										Edit Comment </a>
+								<form id="delete-form" action="/campgrounds/<%=item._id%>/comments/<%=str.id%>?_method=DELETE" method="POST">
+									<button class="btn btn-danger">Delete Comment </button>
+								</form>
+						    <%}%>
+						</div>
+						<%})%>
+					</div
+				</div> 
+			  </div>
+			</div>
+		</div>
+	</div>
+</div>
+
+
+
+<%include ../partials/footer%>
