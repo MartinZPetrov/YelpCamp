@@ -1,8 +1,9 @@
 var express = require("express");
 var router = express.Router();
 var Campground = require("../model/campgrounds");
+var User = require("../model/users");
 var middleWare = require("../middleware");
-
+var Notification = require("../model/notifications");
 
 router.get("/", (req, res) => {
     var user = req.user;
@@ -15,7 +16,7 @@ router.get("/", (req, res) => {
     });
 });
 
-router.post("/", middleWare.isLoggedIn, (req, res) => {
+router.post("/", middleWare.isLoggedIn, async (req, res) => {
     var name = req.body.name;
     var image = req.body.image;
     var description = req.body.description;
@@ -23,11 +24,24 @@ router.post("/", middleWare.isLoggedIn, (req, res) => {
     var author = { id: req.user._id, name: req.user.username };
     var newObj = { name: name, image: image, price: price, description: description, author: author };
 
-    Campground.create(newObj, (err, camp) => {
-        if (err) console.log(err);
-        else res.redirect("/campgrounds");
-    });
+    try {
+        let campground = await Campground.create(newObj);
+        let user = await User.findById(req.user._id).populate("followers").exec();
+        let newNotification = {
+            username: req.user.username,
+            campgroundId: campground.id
+        }
+        for (const follower of user.followers) {
+            let notification = await Notification.create(newNotification);
+            follower.notifications.push(notification);
+            follower.save();
+        }
+        res.redirect("/campgrounds/" + campground.id)
 
+    } catch (error) {
+        req.flash("error", error.message);
+        res.redirect("back");   
+    }
 });
 
 router.get("/new", middleWare.isLoggedIn, (req, res) => {
@@ -66,7 +80,6 @@ router.delete("/:id", middleWare.checkCampgroundOwnerShip, (req, res) => {
         }
     });
 });
-
 
 
 //EDIT

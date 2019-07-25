@@ -10,7 +10,7 @@ middleWare.checkCampgroundOwnerShip = function (req, res, next) {
                 res.redirect("back");
             }
             else {
-                if (req.user._id.equals(foundCampground.author.id))
+                if (req.user._id.equals(foundCampground.author.id) || req.user.isAdmin)
                     next();
                 else
                     res.redirect("back");
@@ -29,7 +29,7 @@ middleWare.checkCommentOwnerShip = function (req, res, next) {
                 res.redirect("back");
             }
             else {
-                if (req.user._id.equals(foundComment.author.id))
+                if (req.user._id.equals(foundComment.author.id) || req.user.isAdmin)
                     next();
                 else
                     res.redirect("back");
