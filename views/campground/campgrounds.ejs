@@ -25,6 +25,9 @@
         <img style="width:100%;" src="<%= each.image%>" />
         <div class="caption">
           <h4><%= each.name %></h4>
+          <div>
+              <span class="badge label-primary"><i class="fas fa-thumbs-up"></i> <%= each.likes.length %></span>
+          </div>
           <p><%= each.description %></p>
           <a
             class="btn btn-primary btn-large"

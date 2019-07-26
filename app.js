@@ -13,6 +13,16 @@ var express = require("express"),
 var indexRoute = require("./routes/index"),
 	commentRoute = require("./routes/comment"),
 	campgroundRoute = require("./routes/campground");
+
+
+// mongose.connect("mongodb+srv://sa:sa777@cluster0-5vsfk.mongodb.net/test?retryWrites=true&w=majority", {
+// 	useNewUrlParser: true,
+// 	useCreateIndex: true
+// }).then(() => {
+// 	console.log("something else");
+// }).catch(err => {
+// 	console.log("ERROR: ", err.message);
+// });
 // DB
 mongoose.connect("mongodb://localhost:27017/yelp_camp", { useNewUrlParser: true });
 // DELETE --- UPDATE requiests

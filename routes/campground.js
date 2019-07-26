@@ -23,14 +23,10 @@ var imageFilter = function (req, file, cb) {
 
 var upload = multer({ storage: storage, fileFilter: imageFilter });
 
-
-// CLOUDINARY_NAME=
-// CLOUDINARY_API=736216711462878
-// CLOUDINARY_SECRET=
 cloudinary.config({
-    cloud_name: "dnk0dpo7h",
-    api_key: "736216711462878",
-    api_secret: "H0JBbtcyVhKNU" 
+    cloud_name: process.env.CLOUDINARY_NAME,
+    api_key: process.env.CLOUDINARY_API,
+    api_secret: process.env.CLOUDINARY_SECRET 
 });
 
 router.get("/", (req, res) => {
@@ -54,33 +50,64 @@ router.get("/", (req, res) => {
     }
 });
 
-// router.post("/", middleWare.isLoggedIn, async (req, res) => {
-//     var name = req.body.name;
-//     var image = req.body.image;
-//     var description = req.body.description;
-//     var price = req.body.price;
-//     var author = { id: req.user._id, name: req.user.username };
-//     var newObj = { name: name, image: image, price: price, description: description, author: author };
+router.post("/", middleWare.isLoggedIn, async (req, res) => {
+    var name = req.body.name;
+    var image = req.body.image;
+    var description = req.body.description;
+    var price = req.body.price;
+    var author = { id: req.user._id, name: req.user.username };
+    var newObj = { name: name, image: image, price: price, description: description, author: author };
 
-//     try {
-//         let campground = await Campground.create(newObj);
-//         let user = await User.findById(req.user._id).populate("followers").exec();
-//         let newNotification = {
-//             username: req.user.username,
-//             campgroundId: campground.id
-//         }
-//         for (const follower of user.followers) {
-//             let notification = await Notification.create(newNotification);
-//             follower.notifications.push(notification);
-//             follower.save();
-//         }
-//         res.redirect("/campgrounds/" + campground.id)
+    try {
+        let campground = await Campground.create(newObj);
+        let user = await User.findById(req.user._id).populate("followers").exec();
+        let newNotification = {
+            username: req.user.username,
+            campgroundId: campground.id
+        }
+        for (const follower of user.followers) {
+            let notification = await Notification.create(newNotification);
+            follower.notifications.push(notification);
+            follower.save();
+        }
+        res.redirect("/campgrounds/" + campground.id)
 
-//     } catch (error) {
-//         req.flash("error", error.message);
-//         res.redirect("back");
-//     }
-// });
+    } catch (error) {
+        req.flash("error", error.message);
+        res.redirect("back");
+    }
+});
+
+// Campground Like Route
+router.post("/:id/like", middleWare.isLoggedIn, function (req, res) {
+    Campground.findById(req.params.id, function (err, foundCampground) {
+        if (err) {
+            console.log(err);
+            return res.redirect("/campgrounds");
+        }
+
+        // check if req.user._id exists in foundCampground.likes
+        var foundUserLike = foundCampground.likes.some(function (like) {
+            return like.equals(req.user._id);
+        });
+
+        if (foundUserLike) {
+            // user already liked, removing like
+            foundCampground.likes.pull(req.user._id);
+        } else {
+            // adding the new user like
+            foundCampground.likes.push(req.user);
+        }
+
+        foundCampground.save(function (err) {
+            if (err) {
+                console.log(err);
+                return res.redirect("/campgrounds");
+            }
+            return res.redirect("/campgrounds/" + foundCampground._id);
+        });
+    });
+});
 
 router.get("/new", middleWare.isLoggedIn, (req, res) => {
     res.render("campground/new");
@@ -88,7 +115,7 @@ router.get("/new", middleWare.isLoggedIn, (req, res) => {
 
 router.get("/:id", middleWare.isLoggedIn, (req, res) => {
     var id = req.params.id;
-    Campground.findById(id).populate("comments").exec((err, foundItem) => {
+    Campground.findById(id).populate("comments likes").exec((err, foundItem) => {
         if (err) console.log(err);
         else {
             console.log(foundItem);
@@ -99,7 +126,6 @@ router.get("/:id", middleWare.isLoggedIn, (req, res) => {
 
 
 router.get("/:id/edit", middleWare.isLoggedIn, (req, res) => {
-    var id = req.params.id;
     Campground.findById(req.params.id, function (err, foundCampground) {
         res.render("campground/edit", { item: foundCampground });
     });
@@ -127,6 +153,8 @@ router.put("/:id", middleWare.checkCampgroundOwnerShip, (req, res) => {
     });
 });
 
+
+// IMAGE FILE UPLOAD
 router.post("/", middleWare.isLoggedIn, upload.single('image'), function (req, res) {
     cloudinary.uploader.upload(req.file.path, function (result) {
         // add cloudinary url for the image to the campground object under image property
