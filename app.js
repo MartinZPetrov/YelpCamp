@@ -7,12 +7,12 @@ var express = require("express"),
 	LocalStrategy = require("passport-local"),
 	User = require("./model/users"),
 	methodOverride = require("method-override"),
-	flash = require("connect-flash");
+	flash = require("connect-flash"),
+	dotnev = require('dotenv').config();
 
 var indexRoute = require("./routes/index"),
 	commentRoute = require("./routes/comment"),
 	campgroundRoute = require("./routes/campground");
-
 // DB
 mongoose.connect("mongodb://localhost:27017/yelp_camp", { useNewUrlParser: true });
 // DELETE --- UPDATE requiests
@@ -54,7 +54,7 @@ app.use(async function (req, res, next) {
 			console.log(error);
 		}
 	}
-	
+
 	res.locals.error = req.flash("error");
 	res.locals.success = req.flash("success");
 	next();
