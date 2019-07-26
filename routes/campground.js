@@ -6,6 +6,7 @@ var middleWare = require("../middleware");
 var multer = require('multer');
 var Notification = require("../model/notifications");
 var cloudinary = require('cloudinary');
+var Review = require("../model/reviews");
 
 var storage = multer.diskStorage({
     filename: function (req, file, callback) {
@@ -115,16 +116,16 @@ router.get("/new", middleWare.isLoggedIn, (req, res) => {
 
 router.get("/:id", middleWare.isLoggedIn, (req, res) => {
     var id = req.params.id;
-    Campground.findById(id).populate("comments likes").exec((err, foundItem) => {
+    Campground.findById(id).populate("comments likes reviews").exec((err, foundItem) => {
         if (err) console.log(err);
         else {
             console.log(foundItem);
-            res.render("campground/show", { item: foundItem });
+            res.render("campground/show", { campground: foundItem });
         }
     });
 });
 
-
+// EDIT
 router.get("/:id/edit", middleWare.isLoggedIn, (req, res) => {
     Campground.findById(req.params.id, function (err, foundCampground) {
         res.render("campground/edit", { item: foundCampground });
@@ -133,18 +134,32 @@ router.get("/:id/edit", middleWare.isLoggedIn, (req, res) => {
 
 // DELETE
 router.delete("/:id", middleWare.checkCampgroundOwnerShip, (req, res) => {
-    Campground.findByIdAndRemove(req.params.id, function (err, foundCampground) {
+    Campground.findById(req.params.id, function (err, campground) {
         if (err) {
-            req.flash("error", err);
             res.redirect("/campgrounds");
-        }
-        else {
-            if (req.user._id.equals(foundCampground.author.id))
-                res.redirect("/campgrounds");
+        } else {
+            // deletes all comments associated with the campground
+            Comment.remove({"_id": {$in: campground.comments}}, function (err, comment) {
+                if (err) {
+                    console.log(err);
+                    return res.redirect("/campgrounds");
+                }
+                // deletes all reviews associated with the campground
+                Review.remove({"_id": {$in: campground.reviews}}, function (err, review) {
+                    if (err) {
+                        console.log(err);
+                        return res.redirect("/campgrounds");
+                    }
+                    //  delete the campground
+                    campground.remove();
+                    req.flash("success", "Campground deleted successfully!");
+                    res.redirect("/campgrounds");
+                });
+            });
         }
     });
+    
 });
-
 
 //EDIT
 router.put("/:id", middleWare.checkCampgroundOwnerShip, (req, res) => {

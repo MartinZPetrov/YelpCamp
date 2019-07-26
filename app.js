@@ -12,7 +12,8 @@ var express = require("express"),
 
 var indexRoute = require("./routes/index"),
 	commentRoute = require("./routes/comment"),
-	campgroundRoute = require("./routes/campground");
+	campgroundRoute = require("./routes/campground"),
+	reviewRoutes     = require("./routes/reviews");
 
 
 // mongose.connect("mongodb+srv://sa:sa777@cluster0-5vsfk.mongodb.net/test?retryWrites=true&w=majority", {
@@ -73,6 +74,7 @@ app.use(async function (req, res, next) {
 app.use("/", indexRoute);
 app.use("/campgrounds/:id/comments", commentRoute);
 app.use("/campgrounds", campgroundRoute);
+app.use("/campgrounds/:id/reviews", reviewRoutes);
 
 app.listen(3000, () => {
 	console.log("server listening on port 3000");
